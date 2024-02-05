@@ -35,6 +35,8 @@ class Karaoke:
     raspi_wifi_conf_file = "/etc/raspiwifi/raspiwifi.conf"
     raspi_wifi_config_installed = os.path.exists(raspi_wifi_conf_file)
 
+    comitup_conf_file = "/etc/comitup.conf"
+
     queue = []
     available_songs = []
 
@@ -98,6 +100,7 @@ class Karaoke:
         # other initializations
         self.platform = get_platform()
         self.screen = None
+        self.start_time = time.time()
 
         logging.basicConfig(
             format="[%(asctime)s] %(levelname)s: %(message)s",
@@ -160,19 +163,23 @@ class Karaoke:
         self.generate_qr_code()
    
 
- 
     # Other ip-getting methods are unreliable and sometimes return 127.0.0.1
     # https://stackoverflow.com/a/28950776
     def get_ip(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            # doesn't even have to be reachable
-            s.connect(("10.255.255.255", 1))
-            IP = s.getsockname()[0]
-        except Exception:
-            IP = "127.0.0.1"
-        finally:
-            s.close()
+        if self.platform == "raspberry_pi":
+            addresses_str = check_output(["hostname", "-I"]).strip().decode("utf-8", "ignore")
+            addresses = addresses_str.split(" ")
+            IP = addresses[0]
+        else:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            try:
+                # doesn't even have to be reachable
+                s.connect(("10.255.255.255", 1))
+                IP = s.getsockname()[0]
+            except Exception:
+                IP = "127.0.0.1"
+            finally:
+                s.close()
         return IP
 
     def get_raspi_wifi_conf_vals(self):
@@ -199,6 +206,27 @@ class Karaoke:
                 ssl_enabled = line.split("d=")[1].strip()
 
         return (server_port, ssid_prefix, ssl_enabled)
+
+    def get_comitup_info(self):
+        """Extract values from the Comitup configuration file."""
+
+        # Define default values.
+        #
+        ap_name = ""
+        ap_password = ""
+        
+        if os.path.isfile(self.comitup_conf_file):
+            f = open(self.comitup_conf_file, "r")
+        
+            # Override the default values according to the configuration file.
+            for line in f.readlines():
+                line = line.split("#", 1)[0]
+                if "ap_name:" in line:
+                    ap_name = line.split("ap_name:")[1].strip()
+                elif "ap_password:" in line:
+                    ap_password = line.split("ap_password:")[1].strip()
+
+        return (ap_name,ap_password)
 
     def get_youtubedl_version(self):
         self.youtubedl_version = (
@@ -635,8 +663,30 @@ class Karaoke:
         logging.info("Starting PiKaraoke!")
         logging.info(f"Connect the player host to: {self.url}/splash")
         self.running = True
+        check_ip = 10
         while self.running:
             try:
+                # Periodically check if IP changed or wifi setup as an access point
+                check_ip = check_ip-1
+                if check_ip <= 0:
+                    check_ip = 10
+                    new_ip = self.get_ip()
+                    if new_ip != self.ip:
+                        logging.debug("IP address (for QR code and splash screen): " + self.ip)
+                        self.ip = new_ip
+
+                        if self.url_override != None:
+                            logging.debug("Overriding URL with " + self.url_override)
+                            self.url = self.url_override
+                        else:
+                            if (self.prefer_hostname):
+                                self.url = f"http://{socket.getfqdn().lower()}:{self.port}"
+                            else:
+                                self.url = f"http://{self.ip}:{self.port}" 
+                                self.url_parsed = urlparse(self.url)
+
+                        self.generate_qr_code()
+
                 if not self.is_file_playing() and self.now_playing != None:
                     self.reset_now_playing()
                 if len(self.queue) > 0:

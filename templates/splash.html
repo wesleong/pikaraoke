@@ -31,7 +31,8 @@
   var volume = 0.85;
 
   const url = `http://${window.location.host}`;
-
+  const port = `{{ port }}`;
+  
   function startNowPlayingPolling() {
     nowPlayingInterval = setInterval(getNowPlaying, 1000);
   }
@@ -265,6 +266,30 @@
       }
     });
   });
+
+  function reloadWifiInfo() {
+      if (document.images) {
+	  // Update IP address and QR code
+	  fetch('/getip')
+	      .then(response => response.text())
+	      .then(text => {
+		  document.getElementById("url").innerHTML ="http://"+text+":"+port;
+		  document.getElementById("screensaver-url").innerHTML ="http://"+text+":"+port;})
+	  var now = new Date();
+	  document.images["qr-code-img"].src = "/qrcode?" + now.getTime();
+	  document.images["screensaver-qr-code-img"].src = "/qrcode?" + now.getTime();
+
+	  // Update Access point info if needed
+	  fetch('/hostap_info')
+	      .then(response => response.text())
+	      .then(text => { document.getElementById("hostap").innerHTML =text;})
+	  
+	  setTimeout("reloadWifiInfo()", 5000);
+      }
+  }
+  //setTimeout("reloadWifiInfo()", 5000);
+  reloadWifiInfo();
+  
 </script>
 {% endblock %} {% block body %}
 
@@ -291,17 +316,24 @@
   </div>
 </div>
 
+<div id="ap-container">
+  <div class="is-size-5 stroke">
+    <div id="hostap">&nbsp;</div>
+  </div>
+</div>
+
 <div id="bottom-container">
   {% if not hide_url %}
   <div id="qr-code">
     <img
+      id="qr-code-img"
       src="{{ url_for('qrcode') }}"
       width="100px"
       style="image-rendering: pixelated"
       alt="qrcode"
     />
     <div class="is-size-5 stroke">
-      <div>&nbsp;{{ url }}</div>
+      <div id="url">&nbsp;{{ url }}</div>
     </div>
   </div>
   {% endif %}
@@ -374,9 +406,9 @@
     {% if not hide_url %}
     <div>
       <div style="text-align: right">
-        <img src="{{ url_for('qrcode') }}" width="30%" height="30%" />
+        <img id="screensaver-qr-code-img" src="{{ url_for('qrcode') }}" width="30%" height="30%" />
       </div>
-      <div>{{ url }}</div>
+      <div id="screensaver-url">{{ url }}</div>
     </div>
     {% endif %}
   </div>
@@ -390,6 +422,7 @@
     background-color: black;
   }
   #top-container,
+  #ap-container,
   #bottom-container {
     position: absolute;
     z-index: 1;
@@ -399,6 +432,14 @@
     top: 0px;
     right: 0px;
     max-width: 75%;
+  }
+  #ap-container {
+    top: 0px;
+    left: 0px;
+    max-width: 50%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
   }
   #bottom-container {
     bottom: 0px;

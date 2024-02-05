@@ -465,7 +465,8 @@ def splash():
         url=k.url,
         hide_url=k.hide_url,
         hide_overlay=k.hide_overlay,
-        screensaver_timeout=k.screensaver_timeout
+        screensaver_timeout=k.screensaver_timeout,
+        port=k.port
     )
 
 @app.route("/info")
@@ -608,6 +609,38 @@ def expand_fs():
         flash("You don't have permission to resize the filesystem", "is-danger")
     return redirect(url_for("home"))
 
+@app.route("/getip")
+def getip():
+    return k.get_ip()
+    return render_template(
+        "text.txt",
+        text = k.get_ip()
+    )
+
+@app.route("/hostap_info")
+def hostap_info():
+    # Only do this on Raspberry Pis
+    if is_raspberry_pi:
+        status = subprocess.run(['iwconfig', 'wlan0'], stdout=subprocess.PIPE).stdout.decode('utf-8')
+        text = ""
+        if "Mode:Master" in status:
+            # Wifi is setup as a Access Point
+            ap_name,ap_password = k.get_comitup_info()
+            if len(ap_password) > 0:
+                text = f"piKaraoke running in standalone mode. <br />Wifi Network: {ap_name} <br />Password: {ap_password}"
+            else:
+                text = f"piKaraoke running in standalone mode. <br />Wifi Network: {ap_name}"
+        else:
+            # You are connected to Wifi as a client
+            text = ""
+    else:
+        # Not a Raspberry Pi
+        text = ""
+        
+    return render_template(
+        "text.txt",
+        text = text
+    )
 
 # Handle sigterm, apparently cherrypy won't shut down without explicit handling
 signal.signal(signal.SIGTERM, lambda signum, stack_frame: k.stop())
