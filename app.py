@@ -464,6 +464,7 @@ def splash():
         blank_page=True,
         url=k.url,
         hide_url=k.hide_url,
+        hide_permissions_modal=k.hide_permissions_modal,
         hide_overlay=k.hide_overlay,
         screensaver_timeout=k.screensaver_timeout
     )
@@ -736,6 +737,12 @@ if __name__ == "__main__":
         required=False,
     )
     parser.add_argument(
+        "--hide-permissions-modal",
+        action="store_true",
+        help="Hide the autoplay confirmation prompt from the splash screen.",
+        required=False,
+    )
+    parser.add_argument(
         "--prefer-ip",
         action="store_true",
         help=f"Show the IP instead of the fully qualified local domain name. Default: {default_prefer_ip}",
@@ -826,6 +833,7 @@ if __name__ == "__main__":
         log_level=args.log_level,
         volume=parsed_volume,
         hide_url=args.hide_url,
+        hide_permissions_modal=args.hide_permissions_modal,
         hide_raspiwifi_instructions=args.hide_raspiwifi_instructions,
         hide_splash_screen=args.hide_splash_screen,
         high_quality=args.high_quality,

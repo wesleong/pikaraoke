@@ -475,4 +475,10 @@
   }
 </style>
 
+
+{% if hide_permissions_modal %}
+<script defer>
+  handleConfirmation();
+</script>
+{% endif %}
 {% endblock %}

@@ -64,6 +64,7 @@ class Karaoke:
         ffmpeg_port=5556,
         download_path="/usr/lib/pikaraoke/songs",
         hide_url=False,
+        hide_permissions_modal=False,
         hide_raspiwifi_instructions=False,
         hide_splash_screen=False,
         high_quality=False,
@@ -82,6 +83,7 @@ class Karaoke:
         self.port = port
         self.ffmpeg_port = ffmpeg_port
         self.hide_url = hide_url
+        self.hide_permissions_modal = hide_permissions_modal
         self.hide_raspiwifi_instructions = hide_raspiwifi_instructions
         self.hide_splash_screen = hide_splash_screen
         self.download_path = download_path
@@ -110,6 +112,7 @@ class Karaoke:
     http port: {self.port}
     ffmpeg port {self.ffmpeg_port}
     hide URL: {self.hide_url}
+    hide permissions modal: {self.hide_permissions_modal}
     prefer IP: {self.prefer_ip}
     url override: {self.url_override}
     hide RaspiWiFi instructions: {self.hide_raspiwifi_instructions}
