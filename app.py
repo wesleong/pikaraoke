@@ -889,7 +889,7 @@ if __name__ == "__main__":
         options.add_argument("--start-maximized")
         options.add_experimental_option("excludeSwitches", ['enable-automation'])
         driver = webdriver.Chrome(service=service, options=options)
-        driver.get(f"{k.url}/splash" )
+        driver.get(f"http://127.0.0.1:{k.port}/splash" )
         driver.add_cookie({'name': 'user', 'value': 'PiKaraoke-Host'})
         # Clicking this counts as an interaction, which will allow the browser to autoplay audio
         wait = WebDriverWait(driver, 60)
